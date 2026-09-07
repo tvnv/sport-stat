@@ -39,8 +39,11 @@ def _get_latest_round(league_id: int, season: int) -> str | None:
     try:
         row = conn.execute(
             """SELECT round FROM matches
-               WHERE league_id=? AND season=? AND status_short IN ('FT','P','AET','PEN')
-               ORDER BY date DESC, round DESC LIMIT 1""",
+               WHERE league_id=? AND season=?
+               GROUP BY round
+               HAVING COUNT(*) = SUM(CASE WHEN status_short IN ('FT','P','AET','PEN') THEN 1 ELSE 0 END)
+               ORDER BY MAX(date) DESC, round DESC
+               LIMIT 1""",
             (league_id, season),
         ).fetchone()
         return row["round"] if row else None

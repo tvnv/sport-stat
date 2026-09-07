@@ -8,7 +8,6 @@ competitions:
       - head_to_head_points
       - head_to_head_goal_difference
       - head_to_head_goals_scored
-      - fair_play
 
   - name: "Ligue 2"
     api_football_id: 62
@@ -19,7 +18,6 @@ competitions:
       - head_to_head_points
       - head_to_head_goal_difference
       - head_to_head_goals_scored
-      - fair_play
 
   - name: "Premier League"
     api_football_id: 39

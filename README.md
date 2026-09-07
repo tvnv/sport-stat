@@ -9,7 +9,8 @@ Application personnelle de statistiques et d'affichage des championnats de footb
 - **Port HTTP** : `8080` (service).
 - **Championnats supportés (11)** : Ligue 1, Ligue 2, Premier League, La Liga, Serie A, Serie B, Bundesliga, Primeira Liga, Super League Greece, Swiss Super League, Süper Lig.
 - **Vues** : `Dernière journée` (défaut) | `Aujourd'hui` | `Prochaine journée`.
-- **Positions avant journée** : chaque position affichée entre parenthèses est le classement **avant** le début de la journée concernée (reconstruit déterministiquement à partir des matchs précédents ; règles de départage isolées par compétition dans `config/competitions.yaml`).
+- **Positions avant journée** : chaque position affichée entre parenthèses est le classement **avant** le début de la journée concernée (reconstruit déterministiquement à partir des matchs précédents ; règles de départage isolées par compétition dans `config/competitions.yaml`). Avant la première journée, toutes les équipes de la compétition sont présentes avec 0 match / 0 point, ordonnées par identifiant d'équipe croissant (ordre documenté).
+- **Dernière journée** : sélectionne la dernière journée entièrement terminée ; une journée partiellement jouée n'est jamais choisie.
 - **Endpoint** : `GET /health` retourne `{"status": "ok"}`.
 
 ## Configuration
@@ -26,8 +27,9 @@ Configuration des championnats : `config/competitions.yaml`. Chaque compétition
       - head_to_head_points
       - head_to_head_goal_difference
       - head_to_head_goals_scored
-      - fair_play
 ```
+
+Les règles de départage réellement supportées sont : `goal_difference`, `goals_scored`, `head_to_head_points`, `head_to_head_goal_difference`, `head_to_head_goals_scored`. Le `fair_play` n'est pas supporté faute de données réelles et ne doit pas être configuré.
 
 Variables d'environnement (copier `.env.example` vers `.env`) :
 

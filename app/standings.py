@@ -1,6 +1,29 @@
 from collections import defaultdict
 
 
+def _make_team_entry(team_id: int, team_name: str) -> dict:
+    return {
+        "team_id": team_id,
+        "team_name": team_name,
+        "played": 0, "win": 0, "draw": 0, "loss": 0,
+        "goals_for": 0, "goals_against": 0,
+        "goal_difference": 0, "points": 0,
+        "h2h": defaultdict(lambda: {"pts": 0, "gf": 0, "ga": 0}),
+    }
+
+
+def _collect_all_teams(matches: list[dict], league_id: int, season: int) -> dict[int, dict]:
+    teams: dict[int, dict] = {}
+    for m in matches:
+        if m["league_id"] == league_id and m["season"] == season:
+            hid, aid = m["home_team_id"], m["away_team_id"]
+            if hid not in teams:
+                teams[hid] = _make_team_entry(hid, m["home_team_name"])
+            if aid not in teams:
+                teams[aid] = _make_team_entry(aid, m["away_team_name"])
+    return teams
+
+
 def compute_standings_for_round(
     matches: list[dict],
     league_id: int,
@@ -8,6 +31,8 @@ def compute_standings_for_round(
     target_round: str,
     tie_break_rules: list[str] | None = None,
 ) -> list[dict]:
+    team_stats = _collect_all_teams(matches, league_id, season)
+
     matches_before = [
         m for m in matches
         if m["league_id"] == league_id
@@ -16,21 +41,8 @@ def compute_standings_for_round(
         and m["status_short"] in ("FT", "P", "AET", "PEN")
     ]
 
-    team_stats: dict[int, dict] = {}
-
     for m in matches_before:
         hid, aid = m["home_team_id"], m["away_team_id"]
-        for tid in (hid, aid):
-            if tid not in team_stats:
-                team_stats[tid] = {
-                    "team_id": tid,
-                    "team_name": m["home_team_name"] if tid == hid else m["away_team_name"],
-                    "played": 0, "win": 0, "draw": 0, "loss": 0,
-                    "goals_for": 0, "goals_against": 0,
-                    "goal_difference": 0, "points": 0,
-                    "h2h": defaultdict(lambda: {"pts": 0, "gf": 0, "ga": 0}),
-                }
-
         hg, ag = m["home_goals"], m["away_goals"]
         if hg is None or ag is None:
             continue
@@ -72,6 +84,7 @@ def compute_standings_for_round(
     if not teams:
         return []
 
+    teams.sort(key=lambda t: t["team_id"])
     _sort_with_tiebreak(teams, tie_break_rules or ["goal_difference", "goals_scored"])
 
     result = []
@@ -153,7 +166,7 @@ def _sort_with_tiebreak(teams: list[dict], rules: list[str]) -> None:
 
     flat: list[dict] = []
     for group in groups:
-        group.sort(key=lambda t: (t["points"], t["goal_difference"], t["goals_for"], t["team_id"]), reverse=True)
+        group.sort(key=lambda t: (-t["points"], -t["goal_difference"], -t["goals_for"], t["team_id"]))
         flat.extend(group)
     teams[:] = flat
 

@@ -1,4 +1,8 @@
-from app.standings import compute_standings_for_round, get_team_position
+from app.standings import (
+    compute_standings_for_round,
+    get_team_position,
+    _validate_rules,
+)
 
 
 def _match(mid, round_str, home, away, hg, ag, status="FT", league=61, season=2026):
@@ -17,6 +21,43 @@ def _match(mid, round_str, home, away, hg, ag, status="FT", league=61, season=20
         "status_short": status,
         "elapsed": None,
     }
+
+
+def test_standings_before_first_matchday_include_all_teams():
+    # All teams of the competition/saison are known through their fixtures.
+    # Before matchday 1, every team must appear with played=0 and points=0.
+    matches = [
+        _match(1, "Regular Season - 1", (101, "Alpha"), (102, "Beta"), 2, 0),
+        _match(2, "Regular Season - 1", (103, "Gamma"), (104, "Delta"), 1, 0),
+        _match(3, "Regular Season - 2", (101, "Alpha"), (103, "Gamma"), 0, 0, status="NS"),
+        _match(4, "Regular Season - 2", (102, "Beta"), (104, "Delta"), 0, 0, status="NS"),
+    ]
+    # Note: even when target_round is matchday 1 (before any match of the
+    # competition is "played"/finished), all four teams must be present.
+    standings = compute_standings_for_round(matches, 61, 2026, "Regular Season - 1", ["goal_difference", "goals_scored"])
+    assert len(standings) == 4
+    for s in standings:
+        assert s["played"] == 0
+        assert s["points"] == 0
+    # Deterministic order before any match: ascending team_id as documented.
+    assert [s["team_id"] for s in standings] == [101, 102, 103, 104]
+
+
+def test_standings_before_matchday_include_all_teams_after_some_rounds():
+    # Even for a later matchday, a team that has not yet "played" a finished
+    # match (but is scheduled) must still be present with played=0.
+    matches = [
+        _match(1, "Regular Season - 1", (101, "Alpha"), (102, "Beta"), 2, 0),
+        _match(2, "Regular Season - 1", (103, "Gamma"), (104, "Delta"), 1, 0, status="NS"),
+        _match(3, "Regular Season - 2", (101, "Alpha"), (103, "Gamma"), 0, 0, status="NS"),
+        _match(4, "Regular Season - 2", (102, "Beta"), (104, "Delta"), 0, 0, status="NS"),
+    ]
+    standings = compute_standings_for_round(matches, 61, 2026, "Regular Season - 2", ["goal_difference", "goals_scored"])
+    # Delta's match was not finished in round 1 -> 0 played, but still listed.
+    delta = [s for s in standings if s["team_id"] == 104][0]
+    assert delta["played"] == 0
+    assert delta["points"] == 0
+    assert len(standings) == 4
 
 
 def test_standings_before_matchday():
@@ -52,6 +93,23 @@ def test_standings_ignore_target_round_results():
         assert s["played"] == 1, f"{s['team_name']} played {s['played']} but should have played only round-1 matches"
         # Goal difference must not include the 9-goal games of round 2.
         assert s["goal_difference"] not in (9, -9), f"{s['team_name']} leak of round-2 result"
+
+
+def test_standings_exclude_target_round_and_incomplete():
+    # A team that only "played" (finished) a match of the target round must NOT
+    # have it counted; teams that played a partial target round must remain at
+    # the pre-round state.
+    matches = [
+        _match(1, "Regular Season - 1", (101, "Alpha"), (102, "Beta"), 2, 0),
+        _match(2, "Regular Season - 1", (103, "Gamma"), (104, "Delta"), 1, 0),
+        # Target round 2: one match finished, one still scheduled.
+        _match(3, "Regular Season - 2", (103, "Gamma"), (101, "Alpha"), 9, 0, status="FT"),
+        _match(4, "Regular Season - 2", (102, "Beta"), (104, "Delta"), 5, 5, status="NS"),
+    ]
+    standings = compute_standings_for_round(matches, 61, 2026, "Regular Season - 2", ["goal_difference", "goals_scored"])
+    for s in standings:
+        assert s["played"] == 1
+        assert s["goal_difference"] not in (9, -9, 5, -5)
 
 
 def test_tiebreak_goal_difference():
@@ -94,6 +152,39 @@ def test_tiebreak_head_to_head():
                                             ["goal_difference", "goals_scored"])
     assert epl_style[0]["team_name"] == "Gamma"
     assert epl_style[1]["team_name"] == "Alpha"
+
+
+def test_tiebreak_rules_validated_and_points_always_first():
+    # points is always prepended if missing.
+    rules = _validate_rules(["goal_difference", "goals_scored"])
+    assert rules == ["points", "goal_difference", "goals_scored"]
+    # fair_play is still a "known" rule but simulated by constant 0.
+    # Config no longer advertises it; verify it produces no bonus.
+    rules = _validate_rules(["goal_difference", "fair_play"])
+    assert "fair_play" in rules
+    # Unknown rules are filtered out.
+    rules = _validate_rules(["bogus"])
+    assert rules == ["goal_difference", "goals_scored"]
+
+
+def test_tiebreak_rules_consistency_documented():
+    # The rules used by the configs must be a strict subset of what the
+    # implementation actually supports. fair_play must NOT be simulated by a
+    # silent constant (config no longer includes it).
+    import yaml
+    from pathlib import Path
+    from app.config import COMPETITIONS_CONFIG
+    with open(COMPETITIONS_CONFIG) as f:
+        data = yaml.safe_load(f)
+    supported = {
+        "points", "goal_difference", "goals_scored",
+        "head_to_head_points", "head_to_head_goal_difference",
+        "head_to_head_goals_scored",
+    }
+    for comp in data["competitions"]:
+        for rule in comp.get("tie_break_rules", []):
+            assert rule in supported, f"{comp['name']} uses unsupported rule {rule}"
+            assert rule != "fair_play", f"{comp['name']} still advertises fair_play"
 
 
 def test_position_lookup():

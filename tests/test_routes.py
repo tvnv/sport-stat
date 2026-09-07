@@ -101,3 +101,50 @@ def test_index_renders_pre_matchday_positions(tmp_path, monkeypatch):
     assert "Lille (4)" in html_next
     # The unplayed matchday 2 must NOT leak a score.
     assert "5 – 5" not in html_next
+
+
+def test_last_view_does_not_select_partial_matchday(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "test.db"))
+
+    import importlib
+    for module_name in ("app.config", "app.database", "app.api_client",
+                        "app.routes", "app.main"):
+        importlib.reload(importlib.import_module(module_name))
+
+    import app.routes as routes
+    import app.main as main
+    from app.api_client import _persist_matches
+
+    season = 2026
+    fixtures = [
+        # Round 1 fully played.
+        _fixture(501, 61, season, "Regular Season - 1", "2026-08-09T15:00:00Z",
+                 (1, "PSG"), (2, "Marseille"), 2, 1, "FT"),
+        _fixture(502, 61, season, "Regular Season - 1", "2026-08-09T17:00:00Z",
+                 (3, "Lyon"), (4, "Lille"), 1, 0, "FT"),
+        # Round 2 PARTIALLY played: only one match finished, the other is NS.
+        _fixture(503, 61, season, "Regular Season - 2", "2026-08-16T15:00:00Z",
+                 (1, "PSG"), (4, "Lille"), 3, 0, "FT"),
+        _fixture(504, 61, season, "Regular Season - 2", "2026-08-16T17:00:00Z",
+                 (2, "Marseille"), (3, "Lyon"), None, None, "NS"),
+    ]
+    _persist_matches(fixtures)
+
+    def fake_fetch(league_id, season_num, round_str=None):
+        return list(fixtures)
+
+    monkeypatch.setattr(routes, "fetch_fixtures", fake_fetch)
+
+    app_obj = main.create_app()
+    client = TestClient(app_obj)
+
+    resp = client.get("/", params={"view": "last"})
+    assert resp.status_code == 200
+    html = resp.text
+
+    # The last fully-completed matchday is Round 1; the partially-played
+    # Round 2 must NOT be chosen as "Dernière journée".
+    assert "Regular Season - 1" in html
+    assert "Regular Season - 2" not in html
