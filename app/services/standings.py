@@ -1,28 +1,23 @@
-"""Calcul du classement.
+"""Calcul déterministe du classement avant une journée.
 
-Invariant métier P0 : la position affichée est le classement AVANT le début de la
-journée concernée. On ne prend en compte QUE les matchs terminés strictement avant
-la journée (matchday) demandée. Aucun résultat de la journée courante n'influence
-le classement.
-
-Scoring déterministe 3/1/0 : victoire = 3 pts, nul = 1 pt, défaite = 0 pt.
-Tri : points DESC, puis différence de buts DESC, puis buts marqués DESC.
+Invariant P0 : seuls les matchs terminés de journées strictement antérieures à la
+journée demandée sont intégrés. Aucun résultat de la journée affichée ne compte.
 """
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 from ..models import Match, StandingRow, Standings
 
-# Tie-break isolable : chaque compétition peut fournir sa propre stratégie de tri.
-# La stratégie par défaut implémente points -> différence de buts -> buts marqués.
-def default_tiebreak_key(row: StandingRow) -> Tuple[int, int, int]:
-    return (-row.points, -row.goal_diff, -row.goals_for)
+
+def default_tiebreak_key(row: StandingRow) -> Tuple:
+    # Les trois règles métier minimales, puis un dernier critère stable uniquement
+    # pour rendre l'ordre reproductible quand elles sont strictement égales.
+    return (-row.points, -row.goal_diff, -row.goals_for, row.team_name.casefold(), row.team_id)
 
 
 Tiebreak = Callable[[StandingRow], Tuple]
 
 
 def _is_before(m: Match, matchday: int) -> bool:
-    # Strictement antérieur à la journée : matchday < journée demandée.
     return m.matchday < matchday
 
 
@@ -35,17 +30,8 @@ def _accumulate(matches: Iterable[Match]) -> Dict[str, Dict[str, int]]:
             key = t.id
             bucket = acc.setdefault(
                 key,
-                {
-                    "name": t.name,
-                    "points": 0,
-                    "goal_diff": 0,
-                    "goals_for": 0,
-                    "goals_against": 0,
-                    "played": 0,
-                    "won": 0,
-                    "drawn": 0,
-                    "lost": 0,
-                },
+                {"name": t.name, "points": 0, "goal_diff": 0, "goals_for": 0,
+                 "goals_against": 0, "played": 0, "won": 0, "drawn": 0, "lost": 0},
             )
             bucket["played"] += 1
             bucket["goals_for"] += score
@@ -64,36 +50,25 @@ def _accumulate(matches: Iterable[Match]) -> Dict[str, Dict[str, int]]:
 
 
 def compute_standings(
-    matches: Iterable[Match],
-    league_id: str,
-    matchday: int,
-    tiebreak: Optional[Tiebreak] = None,
+    matches: Iterable[Match], league_id: str, matchday: int, tiebreak: Optional[Tiebreak] = None,
 ) -> Standings:
-    """Calcule le classement AVANT la journée `matchday`.
+    """Calcule le classement immédiatement avant `matchday`.
 
-    Seuls les matchs strictement antérieurs à `matchday` sont retenus.
+    Pour la première journée, aucun match antérieur n'existe : `rows` est vide.
+    L'UI affiche alors « – » plutôt qu'inventer une position inexistante.
     """
-    tiebreak = tiebreak or default_tiebreak_key
+    key = tiebreak or default_tiebreak_key
     prior = [m for m in matches if m.finished() and _is_before(m, matchday)]
     acc = _accumulate(prior)
-
-    rows: List[StandingRow] = []
-    for key, b in acc.items():
-        rows.append(
-            StandingRow(
-                position=0,
-                team_id=key,
-                team_name=b["name"],
-                points=b["points"],
-                goal_diff=b["goal_diff"],
-                goals_for=b["goals_for"],
-                played=b["played"],
-                won=b["won"],
-                drawn=b["drawn"],
-                lost=b["lost"],
-            )
+    rows: List[StandingRow] = [
+        StandingRow(
+            position=0, team_id=team_id, team_name=b["name"], points=b["points"],
+            goal_diff=b["goal_diff"], goals_for=b["goals_for"], played=b["played"],
+            won=b["won"], drawn=b["drawn"], lost=b["lost"],
         )
-    rows.sort(key=tiebreak)
-    for i, r in enumerate(rows, start=1):
-        r.position = i
+        for team_id, b in acc.items()
+    ]
+    rows.sort(key=key)
+    for i, row in enumerate(rows, start=1):
+        row.position = i
     return Standings(league_id=league_id, matchday=matchday, rows=rows)
