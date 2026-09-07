@@ -1,45 +1,56 @@
 leagues:
-  - id: PL
-    name: Premier League
-    country: England
-    season: 2024
-  - id: PD
-    name: La Liga
-    country: Spain
-    season: 2024
-  - id: SA
-    name: Serie A
-    country: Italy
-    season: 2024
-  - id: BL1
-    name: Bundesliga
-    country: Germany
-    season: 2024
-  - id: FL1
+  - id: ligue_1
     name: Ligue 1
     country: France
-    season: 2024
-  - id: PPL
+    season: 2026
+    provider_id: 61
+  - id: ligue_2
+    name: Ligue 2
+    country: France
+    season: 2026
+    provider_id: 62
+  - id: premier_league
+    name: Premier League
+    country: Angleterre
+    season: 2026
+    provider_id: 39
+  - id: la_liga
+    name: La Liga
+    country: Espagne
+    season: 2026
+    provider_id: 140
+  - id: serie_a
+    name: Serie A
+    country: Italie
+    season: 2026
+    provider_id: 135
+  - id: serie_b
+    name: Serie B
+    country: Italie
+    season: 2026
+    provider_id: 136
+  - id: bundesliga
+    name: Bundesliga
+    country: Allemagne
+    season: 2026
+    provider_id: 78
+  - id: primeira_liga
     name: Primeira Liga
     country: Portugal
-    season: 2024
-  - id: EER
-    name: Eredivisie
-    country: Netherlands
-    season: 2024
-  - id: BSA
-    name: Brasileirão Série A
-    country: Brazil
-    season: 2024
-  - id: DED
-    name: Jupiler Pro League
-    country: Belgium
-    season: 2024
-  - id: CL
-    name: Champions League
-    country: Europe
-    season: 2024
-  - id: EL
-    name: Europa League
-    country: Europe
-    season: 2024
+    season: 2026
+    provider_id: 94
+  - id: super_league_greece
+    name: Super League Greece
+    country: Grèce
+    season: 2026
+    provider_id: 197
+  - id: swiss_super_league
+    name: Swiss Super League
+    country: Suisse
+    season: 2026
+    provider_id: 207
+  - id: super_lig
+    name: Süper Lig
+    country: Turquie
+    season: 2026
+    provider_id: 203
