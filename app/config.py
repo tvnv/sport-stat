@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass, asdict
-from typing import List
+from typing import List, Optional
 
 import yaml
 
@@ -10,24 +10,25 @@ class LeagueConfig:
     id: str
     name: str
     country: str
+    provider_id: Optional[int] = None
     logo: str = ""
-    season: int = 2024
+    season: int = 2026
     enabled: bool = True
 
 
 def _default_leagues() -> List[LeagueConfig]:
     return [
-        LeagueConfig("PL", "Premier League", "England"),
-        LeagueConfig("PD", "La Liga", "Spain"),
-        LeagueConfig("SA", "Serie A", "Italy"),
-        LeagueConfig("BL1", "Bundesliga", "Germany"),
-        LeagueConfig("FL1", "Ligue 1", "France"),
-        LeagueConfig("PPL", "Primeira Liga", "Portugal"),
-        LeagueConfig("EER", "Eredivisie", "Netherlands"),
-        LeagueConfig("BSA", "Brasileirão Série A", "Brazil"),
-        LeagueConfig("DED", "Jupiler Pro League", "Belgium"),
-        LeagueConfig("CL", "Champions League", "Europe"),
-        LeagueConfig("EL", "Europa League", "Europe"),
+        LeagueConfig("ligue_1", "Ligue 1", "France", 61),
+        LeagueConfig("ligue_2", "Ligue 2", "France", 62),
+        LeagueConfig("premier_league", "Premier League", "Angleterre", 39),
+        LeagueConfig("la_liga", "La Liga", "Espagne", 140),
+        LeagueConfig("serie_a", "Serie A", "Italie", 135),
+        LeagueConfig("serie_b", "Serie B", "Italie", 136),
+        LeagueConfig("bundesliga", "Bundesliga", "Allemagne", 78),
+        LeagueConfig("primeira_liga", "Primeira Liga", "Portugal", 94),
+        LeagueConfig("super_league_greece", "Super League Greece", "Grèce", 197),
+        LeagueConfig("swiss_super_league", "Swiss Super League", "Suisse", 207),
+        LeagueConfig("super_lig", "Süper Lig", "Turquie", 203),
     ]
 
 
