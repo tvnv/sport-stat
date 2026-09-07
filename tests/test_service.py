@@ -59,3 +59,26 @@ def test_next_is_strictly_future():
     ]
     svc, league = service(matches)
     assert svc.league_view(league, "next").matchday == 4
+
+
+def test_next_is_strictly_after_current_spanning_matchday():
+    # Une journée s'étale parfois vendredi → lundi : "prochaine" doit désigner
+    # la journée suivante, pas la journée en cours déjà couverte par "aujourd'hui".
+    matches = [
+        mk("1", 3, "2026-09-04T18:00:00Z"),                       # jeudi, fini
+        mk("2", 3, "2026-09-07T18:00:00Z", status="SCHEDULED"),   # lundi (aujourd'hui)
+        mk("3", 4, "2026-09-14T18:00:00Z", status="SCHEDULED"),   # lundi suivant
+    ]
+    svc, league = service(matches)
+    assert svc.league_view(league, "today").matchday == 3
+    assert svc.league_view(league, "next").matchday == 4
+
+
+def test_next_without_match_today_targets_first_future_matchday():
+    matches = [
+        mk("1", 2, "2026-09-01T18:00:00Z"),                      # fini
+        mk("2", 3, "2026-09-14T18:00:00Z", status="SCHEDULED"),  # futur
+    ]
+    svc, league = service(matches)
+    assert svc.league_view(league, "today").matchday == 0
+    assert svc.league_view(league, "next").matchday == 3

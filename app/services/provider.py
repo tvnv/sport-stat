@@ -51,6 +51,10 @@ class HttpFootballProvider(FootballProvider):
             resp = client.get(f"{self._base_url}/fixtures", params=params, headers=headers)
             resp.raise_for_status()
             data = resp.json()
+        if not isinstance(data, dict) or data.get("errors"):
+            # Quota, clé invalide ou erreur API : on lève pour que le wrapper
+            # cache puisse servir le fallback au lieu d'une réponse vide trompeuse.
+            raise RuntimeError(f"API-Football error: {data}")
         return [self._parse(item, str(league_id)) for item in data.get("response", [])]
 
     @staticmethod
@@ -131,8 +135,11 @@ class CachedFootballProvider(FootballProvider):
         return [Match.model_validate_json(r[0]) for r in rows]
 
     def _store(self, league_id: str, matches: List[Match]) -> None:
+        if not matches:
+            return  # réponse vide : conserver les dernières données connues
         now = time.time()
         with self._lock, self._connect() as conn:
+            conn.execute("DELETE FROM matches WHERE league_id = ?", (league_id,))
             for m in matches:
                 conn.execute(
                     "INSERT OR REPLACE INTO matches(id, league_id, payload, fetched_at) VALUES (?,?,?,?)",

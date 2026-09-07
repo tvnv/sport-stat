@@ -90,3 +90,16 @@ def test_partial_current_matchday_is_ignored_in_its_own_standings():
     s = compute_standings(matches, "TST", 2)
     assert s.rows[0].played == 1
     assert all(r.team_id != "C" for r in s.rows)
+
+
+def test_unknown_matchday_zero_is_excluded_from_standings():
+    # Un match sans round exploitable (matchday=0) ne doit pas compter dans le
+    # classement de n'importe quelle journée : les vues l'ignorent déjà.
+    matches = [
+        mk("A", "B", 0, 2, 0),
+        mk("C", "D", 1, 1, 0),
+    ]
+    s = compute_standings(matches, "TST", 2)
+    assert all(r.team_id != "A" for r in s.rows)
+    assert all(r.team_id != "B" for r in s.rows)
+    assert {r.team_id for r in s.rows} == {"C", "D"}

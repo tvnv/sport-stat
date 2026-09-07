@@ -47,6 +47,8 @@ def api_competitions():
 @app.get("/api/dashboard")
 def api_dashboard(view: str = "last", label: str = None):
     selected = label or view or "last"
+    if selected not in {"last", "today", "next"}:
+        selected = "last"
     views = [service.league_view(l, selected) for l in settings.leagues]
     return {"view": selected, "views": [v.model_dump(mode="json") for v in views]}
 

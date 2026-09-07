@@ -18,7 +18,9 @@ Tiebreak = Callable[[StandingRow], Tuple]
 
 
 def _is_before(m: Match, matchday: int) -> bool:
-    return m.matchday < matchday
+    # Une journée inconnue (round absent, 0) ne peut pas nourrir le classement :
+    # elle serait comptée pour chaque journée affichée.
+    return 0 < m.matchday < matchday
 
 
 def _accumulate(matches: Iterable[Match]) -> Dict[str, Dict[str, int]]:

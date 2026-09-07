@@ -51,3 +51,13 @@ Avant la J1, aucun classement sportif n’existe encore. L’application n’inv
 ```bash
 pytest -q
 ```
+
+## Notes de campagne (stabilisation 2026-09-07)
+
+Défauts corrigés lors de la campagne, chacun couvert par un test déterministe :
+
+- **Contamination du cache SQLite** : un rafraîchissement partiel (ex. réponse API réduite) ne réintroduit plus d'anciens matchs dans le fallback. La dernière réponse réussie est la seule référence (`tests/test_cache.py::test_cache_partial_refresh_does_not_contaminate_fallback`).
+- **Erreurs API-Football en HTTP 200** : un corps d'erreur (quota, clé invalide) lève désormais une exception pour que le cache serve le fallback au lieu d'une réponse vide trompeuse (`tests/test_cache.py::test_http_provider_raises_on_api_error_body`).
+- **Vue « prochaine » sur journée étalée** : une journée qui s'étend sur plusieurs jours (vendredi → lundi) faisait afficher le même matchday pour « aujourd'hui » et « prochaine ». La vue « prochaine » est désormais strictement après la journée en cours (`tests/test_service.py::test_next_is_strictly_after_current_spanning_matchday`).
+- **Matchs sans round exploitable** : un match avec `matchday = 0` ne peut plus entrer dans le classement de n'importe quelle journée (`tests/test_standings.py::test_unknown_matchday_zero_is_excluded_from_standings`).
+- **Paramètre `view` invalide** : `/api/dashboard?view=invalide` retombe proprement sur `last` au lieu d'être renvoyé tel quel (`tests/test_endpoints.py::test_dashboard_invalid_view_falls_back_to_last`).

@@ -62,3 +62,11 @@ def test_frontend_pages(tmp_path, monkeypatch):
     assert client.get("/competition/ligue_1").status_code == 200
     assert client.get("/static/style.css").status_code == 200
     assert client.get("/static/app.js").status_code == 200
+
+
+def test_dashboard_invalid_view_falls_back_to_last(tmp_path, monkeypatch):
+    client = make_client(tmp_path, monkeypatch)
+    r = client.get("/api/dashboard?view=not-a-view")
+    assert r.status_code == 200
+    assert r.json()["view"] == "last"
+    assert all(v["label"] == "last" for v in r.json()["views"])

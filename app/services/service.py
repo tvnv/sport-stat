@@ -39,10 +39,18 @@ class AppService:
             )
 
         if label == "next":
+            # Une journée s'étend parfois sur plusieurs jours (vendredi → lundi).
+            # "prochaine" doit être strictement après la journée en cours, sinon
+            # les vues today/next montreraient le même matchday.
+            current = next(
+                (md for md in matchdays if any(m.date[:10] == today for m in matches_by_md[md])),
+                None,
+            )
+            floor = current if current is not None else 0
             return next(
                 (
-                    md for md in matchdays
-                    if any(m.date[:10] > today and not m.finished() for m in matches_by_md[md])
+                    md for md in matchdays if md > floor
+                    and any(m.date[:10] > today and not m.finished() for m in matches_by_md[md])
                 ),
                 None,
             )
