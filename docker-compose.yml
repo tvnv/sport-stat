@@ -4,13 +4,15 @@ services:
     container_name: sport-stat
     ports:
       - "8080:8080"
-    env_file:
-      - .env
+    environment:
+      API_FOOTBALL_KEY: ${API_FOOTBALL_KEY:-}
+      SPORTSTAT_DB: /app/data/sportstat.db
+      SPORTSTAT_CACHE_TTL: ${SPORTSTAT_CACHE_TTL:-21600}
     volumes:
       - ./data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
       interval: 30s
       timeout: 5s
       retries: 3
