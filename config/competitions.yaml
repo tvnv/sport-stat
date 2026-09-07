@@ -1,0 +1,108 @@
+competitions:
+  - name: "Ligue 1"
+    api_football_id: 61
+    country: "France"
+    tie_break_rules:
+      - goal_difference
+      - goals_scored
+      - head_to_head_points
+      - head_to_head_goal_difference
+      - head_to_head_goals_scored
+      - fair_play
+
+  - name: "Ligue 2"
+    api_football_id: 62
+    country: "France"
+    tie_break_rules:
+      - goal_difference
+      - goals_scored
+      - head_to_head_points
+      - head_to_head_goal_difference
+      - head_to_head_goals_scored
+      - fair_play
+
+  - name: "Premier League"
+    api_football_id: 39
+    country: "England"
+    tie_break_rules:
+      - goal_difference
+      - goals_scored
+      - head_to_head_points
+      - head_to_head_goal_difference
+      - head_to_head_goals_scored
+
+  - name: "La Liga"
+    api_football_id: 140
+    country: "Spain"
+    tie_break_rules:
+      - head_to_head_points
+      - head_to_head_goal_difference
+      - head_to_head_goals_scored
+      - goal_difference
+      - goals_scored
+
+  - name: "Serie A"
+    api_football_id: 135
+    country: "Italy"
+    tie_break_rules:
+      - head_to_head_points
+      - head_to_head_goal_difference
+      - goal_difference
+      - goals_scored
+
+  - name: "Serie B"
+    api_football_id: 136
+    country: "Italy"
+    tie_break_rules:
+      - head_to_head_points
+      - head_to_head_goal_difference
+      - goal_difference
+      - goals_scored
+
+  - name: "Bundesliga"
+    api_football_id: 78
+    country: "Germany"
+    tie_break_rules:
+      - goal_difference
+      - goals_scored
+      - head_to_head_points
+      - head_to_head_goal_difference
+      - head_to_head_goals_scored
+
+  - name: "Primeira Liga"
+    api_football_id: 94
+    country: "Portugal"
+    tie_break_rules:
+      - head_to_head_points
+      - head_to_head_goal_difference
+      - head_to_head_goals_scored
+      - goal_difference
+      - goals_scored
+
+  - name: "Super League Greece"
+    api_football_id: 195
+    country: "Greece"
+    tie_break_rules:
+      - head_to_head_points
+      - head_to_head_goal_difference
+      - goal_difference
+      - goals_scored
+
+  - name: "Swiss Super League"
+    api_football_id: 207
+    country: "Switzerland"
+    tie_break_rules:
+      - goal_difference
+      - goals_scored
+      - head_to_head_points
+      - head_to_head_goal_difference
+
+  - name: "Süper Lig"
+    api_football_id: 203
+    country: "Turkey"
+    tie_break_rules:
+      - goal_difference
+      - goals_scored
+      - head_to_head_points
+      - head_to_head_goal_difference
+      - head_to_head_goals_scored

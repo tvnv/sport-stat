@@ -1,0 +1,15 @@
+services:
+  sport-stat:
+    build: .
+    container_name: sport-stat
+    ports:
+      - "8080:8080"
+    environment:
+      - API_FOOTBALL_KEY=${API_FOOTBALL_KEY}
+      - DATABASE_PATH=/app/data/sport_stat.db
+    volumes:
+      - sport-stat-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  sport-stat-data:

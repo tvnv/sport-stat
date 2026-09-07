@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sport Stat</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>Sport Stat</h1>
+        <nav>
+            <a href="/?view=last" class="{% if current_view == 'last' %}active{% endif %}">Dernière journée</a>
+            <a href="/?view=today" class="{% if current_view == 'today' %}active{% endif %}">Aujourd'hui</a>
+            <a href="/?view=next" class="{% if current_view == 'next' %}active{% endif %}">Prochaine journée</a>
+        </nav>
+    </header>
+    <main>
+        {% for section in sections %}
+        <section class="competition-section">
+            <h2>{{ section.competition }}</h2>
+            <p class="round-label">{{ section.round }}</p>
+            <div class="fixtures">
+                {% for fx in section.fixtures %}
+                <div class="fixture">
+                    <span class="team home-team">
+                        {{ fx.home_team }}{% if fx.home_position is not none %} ({{ fx.home_position }}){% endif %}
+                    </span>
+                    <span class="score">{{ fx.score_str }}</span>
+                    <span class="team away-team">
+                        {{ fx.away_team }}{% if fx.away_position is not none %} ({{ fx.away_position }}){% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+                {% if not section.fixtures %}
+                <p class="no-fixtures">Aucun match disponible</p>
+                {% endif %}
+            </div>
+        </section>
+        {% endfor %}
+        {% if not sections %}
+        <p class="no-data">Aucune donnée disponible. Configurez votre clé API_FOOTBALL_KEY.</p>
+        {% endif %}
+    </main>
+</body>
+</html>
