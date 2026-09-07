@@ -1,7 +1,3 @@
-import os
-import tempfile
-from pathlib import Path
-
 from fastapi.testclient import TestClient
 
 from app.config import Settings
@@ -28,46 +24,41 @@ def test_health(tmp_path, monkeypatch):
     assert r.json() == {"status": "ok"}
 
 
-def test_eleven_leagues_configured(tmp_path, monkeypatch):
+def test_required_eleven_competitions_configured(tmp_path, monkeypatch):
     client = make_client(tmp_path, monkeypatch)
-    r = client.get("/api/leagues")
+    r = client.get("/api/competitions")
     assert r.status_code == 200
-    assert len(r.json()["leagues"]) == 11
+    competitions = r.json()["competitions"]
+    assert len(competitions) == 11
+    ids = {c["id"] for c in competitions}
+    assert {"ligue_1", "ligue_2", "premier_league", "la_liga", "serie_a", "serie_b", "bundesliga", "primeira_liga", "super_league_greece", "swiss_super_league", "super_lig"} == ids
 
 
-def test_dashboard_endpoint(tmp_path, monkeypatch):
+def test_dashboard_defaults_to_last(tmp_path, monkeypatch):
     client = make_client(tmp_path, monkeypatch)
     r = client.get("/api/dashboard")
     assert r.status_code == 200
-    views = r.json()["views"]
-    assert len(views) == 11
-    # Les vues exposent les champs attendus : pays / ligue / journée / matchs / score / statut.
-    v = views[0]
-    for k in ("league_id", "league_name", "country", "matchday", "label", "matches"):
-        assert k in v
-    if v["matches"]:
-        m = v["matches"][0]
-        for k in ("home_team", "away_team", "home_score", "away_score", "status"):
-            assert k in m
+    assert r.json()["view"] == "last"
+    assert len(r.json()["views"]) == 11
 
 
-def test_competition_endpoint(tmp_path, monkeypatch):
+def test_contractual_competition_routes(tmp_path, monkeypatch):
     client = make_client(tmp_path, monkeypatch)
-    r = client.get("/api/competition/PL")
-    assert r.status_code == 200
-    body = r.json()
-    assert body["league_id"] == "PL"
-    assert body["label"] in ("last", "today", "next")
+    for suffix, label in (("last-matchday", "last"), ("today", "today"), ("next-matchday", "next")):
+        r = client.get(f"/api/competitions/ligue_1/{suffix}")
+        assert r.status_code == 200
+        assert r.json()["league_id"] == "ligue_1"
+        assert r.json()["label"] == label
 
 
 def test_competition_unknown_404(tmp_path, monkeypatch):
     client = make_client(tmp_path, monkeypatch)
-    assert client.get("/api/competition/ZZZ").status_code == 404
+    assert client.get("/api/competitions/unknown/last-matchday").status_code == 404
 
 
 def test_frontend_pages(tmp_path, monkeypatch):
     client = make_client(tmp_path, monkeypatch)
     assert client.get("/").status_code == 200
-    assert client.get("/competition/PL").status_code == 200
+    assert client.get("/competition/ligue_1").status_code == 200
     assert client.get("/static/style.css").status_code == 200
     assert client.get("/static/app.js").status_code == 200
