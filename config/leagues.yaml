@@ -1,0 +1,45 @@
+leagues:
+  - id: PL
+    name: Premier League
+    country: England
+    season: 2024
+  - id: PD
+    name: La Liga
+    country: Spain
+    season: 2024
+  - id: SA
+    name: Serie A
+    country: Italy
+    season: 2024
+  - id: BL1
+    name: Bundesliga
+    country: Germany
+    season: 2024
+  - id: FL1
+    name: Ligue 1
+    country: France
+    season: 2024
+  - id: PPL
+    name: Primeira Liga
+    country: Portugal
+    season: 2024
+  - id: EER
+    name: Eredivisie
+    country: Netherlands
+    season: 2024
+  - id: BSA
+    name: Brasileirão Série A
+    country: Brazil
+    season: 2024
+  - id: DED
+    name: Jupiler Pro League
+    country: Belgium
+    season: 2024
+  - id: CL
+    name: Champions League
+    country: Europe
+    season: 2024
+  - id: EL
+    name: Europa League
+    country: Europe
+    season: 2024

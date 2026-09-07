@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>sport-stat</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header><h1>sport-stat — journées des championnats européens</h1></header>
+  <main id="app" class="container">
+    <div class="toolbar">
+      <select id="league-filter"><option value="">Toutes les ligues</option></select>
+      <div class="tabs">
+        <button data-label="last" class="active">Dernière journée</button>
+        <button data-label="today">Aujourd'hui</button>
+        <button data-label="next">Prochaine journée</button>
+      </div>
+    </div>
+    <div id="boards" class="boards"></div>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

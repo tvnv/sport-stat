@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>sport-stat — compétition</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header><a href="/">← Accueil</a><h1>sport-stat</h1></header>
+  <main id="app" class="container">
+    <div class="toolbar">
+      <select id="league-nav"></select>
+      <div class="tabs">
+        <button data-label="last" class="active">Dernière</button>
+        <button data-label="today">Aujourd'hui</button>
+        <button data-label="next">Prochaine</button>
+      </div>
+    </div>
+    <div id="board"></div>
+    <div id="standings"></div>
+  </main>
+  <script>window.LEAGUE_ID = "{{ league_id }}";</script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
