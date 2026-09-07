@@ -123,8 +123,6 @@ def _sort_with_tiebreak(teams: list[dict], rules: list[str]) -> None:
             return team["goal_difference"]
         if rule == "goals_scored":
             return team["goals_for"]
-        if rule == "fair_play":
-            return 0
         if rule.startswith("head_to_head"):
             gids = {t["team_id"] for t in group}
             total_pts = 0
@@ -173,7 +171,7 @@ def _sort_with_tiebreak(teams: list[dict], rules: list[str]) -> None:
 
 def _validate_rules(rules: list[str]) -> list[str]:
     known = {
-        "points", "goal_difference", "goals_scored", "fair_play",
+        "points", "goal_difference", "goals_scored",
         "head_to_head_points", "head_to_head_goal_difference",
         "head_to_head_goals_scored",
     }

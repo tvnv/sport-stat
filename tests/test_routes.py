@@ -148,3 +148,64 @@ def test_last_view_does_not_select_partial_matchday(tmp_path, monkeypatch):
     # Round 2 must NOT be chosen as "Dernière journée".
     assert "Regular Season - 1" in html
     assert "Regular Season - 2" not in html
+
+
+def test_last_view_does_not_favor_old_postponed_match(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "test.db"))
+
+    import importlib
+    for module_name in ("app.config", "app.database", "app.api_client",
+                        "app.routes", "app.main"):
+        importlib.reload(importlib.import_module(module_name))
+
+    import app.routes as routes
+    import app.main as main
+    from app.api_client import _persist_matches
+
+    season = 2026
+    fixtures = [
+        # J1, J2, J4, J5 fully played.
+        _fixture(1001, 61, season, "Regular Season - 1", "2026-08-09T15:00:00Z",
+                 (1, "PSG"), (2, "Marseille"), 2, 1, "FT"),
+        _fixture(1002, 61, season, "Regular Season - 1", "2026-08-09T17:00:00Z",
+                 (3, "Lyon"), (4, "Lille"), 1, 0, "FT"),
+        _fixture(1003, 61, season, "Regular Season - 2", "2026-08-16T15:00:00Z",
+                 (1, "PSG"), (4, "Lille"), 3, 0, "FT"),
+        _fixture(1004, 61, season, "Regular Season - 2", "2026-08-16T17:00:00Z",
+                 (2, "Marseille"), (3, "Lyon"), 1, 1, "FT"),
+        _fixture(1005, 61, season, "Regular Season - 3", "2026-08-23T15:00:00Z",
+                 (1, "PSG"), (3, "Lyon"), 2, 0, "FT"),
+        _fixture(1006, 61, season, "Regular Season - 3", "2026-08-23T17:00:00Z",
+                 (2, "Marseille"), (4, "Lille"), 0, 1, "FT"),
+        _fixture(1007, 61, season, "Regular Season - 4", "2026-08-30T15:00:00Z",
+                 (1, "PSG"), (2, "Marseille"), 0, 0, "FT"),
+        _fixture(1008, 61, season, "Regular Season - 4", "2026-08-30T17:00:00Z",
+                 (3, "Lyon"), (4, "Lille"), 2, 2, "FT"),
+        _fixture(1009, 61, season, "Regular Season - 5", "2026-09-06T15:00:00Z",
+                 (1, "PSG"), (4, "Lille"), 4, 1, "FT"),
+        _fixture(1010, 61, season, "Regular Season - 5", "2026-09-06T17:00:00Z",
+                 (2, "Marseille"), (3, "Lyon"), 1, 0, "FT"),
+        # A J3 match was postponed to AFTER the end of J5 (latest date overall).
+        _fixture(1011, 61, season, "Regular Season - 3", "2026-09-10T19:00:00Z",
+                 (4, "Lille"), (2, "Marseille"), 1, 2, "FT"),
+    ]
+    _persist_matches(fixtures)
+
+    def fake_fetch(league_id, season_num, round_str=None):
+        return list(fixtures)
+
+    monkeypatch.setattr(routes, "fetch_fixtures", fake_fetch)
+
+    app_obj = main.create_app()
+    client = TestClient(app_obj)
+
+    resp = client.get("/", params={"view": "last"})
+    assert resp.status_code == 200
+    html = resp.text
+
+    # Even though the J3 postponed match has the most recent MAX(date),
+    # the view "Dernière journée" must remain J5 (highest fully-completed round).
+    assert "Regular Season - 5" in html
+    assert "Regular Season - 3" not in html

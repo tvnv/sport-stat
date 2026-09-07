@@ -37,18 +37,21 @@ def _get_current_season() -> int:
 def _get_latest_round(league_id: int, season: int) -> str | None:
     conn = get_db()
     try:
-        row = conn.execute(
+        rows = conn.execute(
             """SELECT round FROM matches
                WHERE league_id=? AND season=?
                GROUP BY round
-               HAVING COUNT(*) = SUM(CASE WHEN status_short IN ('FT','P','AET','PEN') THEN 1 ELSE 0 END)
-               ORDER BY MAX(date) DESC, round DESC
-               LIMIT 1""",
+               HAVING COUNT(*) = SUM(CASE WHEN status_short IN ('FT','P','AET','PEN') THEN 1 ELSE 0 END)""",
             (league_id, season),
-        ).fetchone()
-        return row["round"] if row else None
+        ).fetchall()
     finally:
         conn.close()
+    if not rows:
+        return None
+    # Select the most advanced fully-completed round by round number, not by
+    # MAX(date): a postponed match from an older round played late must not
+    # push that older round ahead of a higher, fully-completed round.
+    return max(rows, key=lambda r: (_extract_round_number(r["round"]), r["round"]))["round"]
 
 
 def _get_next_round(league_id: int, season: int, current_round: str | None) -> str | None:

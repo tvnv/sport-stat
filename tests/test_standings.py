@@ -158,10 +158,10 @@ def test_tiebreak_rules_validated_and_points_always_first():
     # points is always prepended if missing.
     rules = _validate_rules(["goal_difference", "goals_scored"])
     assert rules == ["points", "goal_difference", "goals_scored"]
-    # fair_play is still a "known" rule but simulated by constant 0.
-    # Config no longer advertises it; verify it produces no bonus.
+    # fair_play is filtered out as an unsupported rule (no silent constant 0).
     rules = _validate_rules(["goal_difference", "fair_play"])
-    assert "fair_play" in rules
+    assert "fair_play" not in rules
+    assert rules == ["points", "goal_difference"]
     # Unknown rules are filtered out.
     rules = _validate_rules(["bogus"])
     assert rules == ["goal_difference", "goals_scored"]
